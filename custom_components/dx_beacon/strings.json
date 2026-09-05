@@ -1,0 +1,15 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "DX-SMART beacon",
+        "data": { "address": "Indirizzo MAC del beacon" }
+      },
+      "confirm": {
+        "title": "Aggiungere il beacon {name}?",
+        "description": "Rilevato beacon Eddystone {name}."
+      }
+    },
+    "abort": { "already_configured": "Beacon già configurato" }
+  }
+}

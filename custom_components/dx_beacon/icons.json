@@ -1,0 +1,13 @@
+{
+  "entity": {
+    "device_tracker": {"tracker": {"default": "mdi:access-point"}},
+    "sensor": {
+      "distance": {"default": "mdi:signal-distance-variant"},
+      "rssi": {"default": "mdi:bluetooth-audio"},
+      "tx_power": {"default": "mdi:access-point"},
+      "temperature": {"default": "mdi:chip"},
+      "adv_count": {"default": "mdi:counter"},
+      "uptime_s": {"default": "mdi:timer-outline"}
+    }
+  }
+}

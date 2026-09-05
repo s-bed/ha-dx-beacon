@@ -1,0 +1,23 @@
+{
+  "domain": "dx_beacon",
+  "name": "DX-SMART Beacon",
+  "codeowners": [
+    "@Itstommy10"
+  ],
+  "config_flow": true,
+  "dependencies": [
+    "bluetooth_adapters"
+  ],
+  "documentation": "https://github.com/Itstommy10/ha-dx-beacon",
+  "integration_type": "device",
+  "iot_class": "local_push",
+  "issue_tracker": "https://github.com/Itstommy10/ha-dx-beacon/issues",
+  "bluetooth": [
+    {
+      "service_uuid": "0000feaa-0000-1000-8000-00805f9b34fb",
+      "connectable": false
+    }
+  ],
+  "requirements": [],
+  "version": "0.3.0"
+}
