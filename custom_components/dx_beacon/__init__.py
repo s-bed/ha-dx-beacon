@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, replace
+from datetime import datetime, timedelta
 
 from homeassistant.components import bluetooth
 from homeassistant.components.bluetooth import (
@@ -14,8 +15,10 @@ from homeassistant.components.bluetooth import (
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.dispatcher import async_dispatcher_send
+from homeassistant.helpers.event import async_track_time_interval
 
-from .const import CONF_ADDRESS, DOMAIN, EDDYSTONE_UUID, DX_BATT_UUID, APPLE_ID
+from .const import APPLE_ID, CONF_ADDRESS, DOMAIN, DX_BATT_UUID, EDDYSTONE_UUID
+from .source import async_resolve_source_name
 
 _LOGGER = logging.getLogger(__name__)
 PLATFORMS = ["sensor", "device_tracker"]
@@ -38,6 +41,7 @@ class BeaconData:
     # comune
     rssi: int | None = None
     source: str | None = None
+    source_name: str | None = None
     present: bool = False
 
 
@@ -95,9 +99,19 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         async_dispatcher_send(hass, signal(entry.entry_id), data)
 
     @callback
+    def _with_reception(data: BeaconData, info: BluetoothServiceInfoBleak) -> BeaconData:
+        return replace(
+            data,
+            rssi=info.rssi,
+            source=info.source,
+            source_name=async_resolve_source_name(hass, info.source),
+            distance=estimate_distance(data.tx_power, info.rssi),
+        )
+
+    @callback
     def _on_adv(info: BluetoothServiceInfoBleak, change: BluetoothChange) -> None:
         prev: BeaconData = hass.data[DOMAIN][entry.entry_id]
-        upd: dict = {"rssi": info.rssi, "source": info.source, "present": True}
+        upd: dict = {"present": True}
         raw = info.service_data.get(EDDYSTONE_UUID)
         if raw and (tlm := parse_tlm(bytes(raw))):
             upd.update(tlm)
@@ -107,22 +121,36 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         ib = info.manufacturer_data.get(APPLE_ID)
         if ib and (ibd := parse_ibeacon(bytes(ib))):
             upd.update(ibd)
-        data = replace(prev, **upd)
-        data.distance = estimate_distance(data.tx_power, data.rssi)
-        _push(data)
+        _push(_with_reception(replace(prev, **upd), info))
+
+    @callback
+    def _refresh_reception(now: datetime) -> None:
+        # HA can change the preferred receiver without dispatching a callback
+        # when the advertising payload is unchanged. Read its cached selection;
+        # this does not start a scan or connect to the beacon.
+        prev: BeaconData = hass.data[DOMAIN][entry.entry_id]
+        if not prev.present:
+            return
+        info = bluetooth.async_last_service_info(hass, address, connectable=False)
+        if info is not None and (data := _with_reception(prev, info)) != prev:
+            _push(data)
 
     @callback
     def _on_unavailable(info: BluetoothServiceInfoBleak) -> None:
         prev: BeaconData = hass.data[DOMAIN][entry.entry_id]
-        _push(replace(prev, present=False, distance=None, rssi=None))
+        _push(replace(prev, present=False, distance=None, rssi=None, source_name=None))
 
     entry.async_on_unload(
         bluetooth.async_register_callback(
-            hass, _on_adv, BluetoothCallbackMatcher(address=address), BluetoothScanningMode.PASSIVE
+            hass, _on_adv, BluetoothCallbackMatcher(address=address, connectable=False),
+            BluetoothScanningMode.PASSIVE
         )
     )
     entry.async_on_unload(
         bluetooth.async_track_unavailable(hass, _on_unavailable, address, connectable=False)
+    )
+    entry.async_on_unload(
+        async_track_time_interval(hass, _refresh_reception, timedelta(seconds=10))
     )
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     return True

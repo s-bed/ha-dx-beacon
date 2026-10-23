@@ -17,6 +17,7 @@
       "tracker": { "name": "Présence" }
     },
     "sensor": {
+      "source_name": { "name": "Récepteur le plus proche" },
       "distance": { "name": "Distance estimée" },
       "rssi": { "name": "Intensité du signal" },
       "battery_pct": { "name": "Batterie" },

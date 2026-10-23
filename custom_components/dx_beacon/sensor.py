@@ -9,8 +9,8 @@ from homeassistant.components.sensor import (
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     PERCENTAGE,
-    EntityCategory,
     SIGNAL_STRENGTH_DECIBELS_MILLIWATT,
+    EntityCategory,
     UnitOfElectricPotential,
     UnitOfLength,
     UnitOfTemperature,
@@ -25,6 +25,7 @@ from .entity import DxBeaconEntity
 
 D = SensorEntityDescription
 DESCRIPTIONS: tuple[SensorEntityDescription, ...] = (
+    D(key="source_name"),
     D(key="distance", native_unit_of_measurement=UnitOfLength.METERS,
       device_class=SensorDeviceClass.DISTANCE, state_class=SensorStateClass.MEASUREMENT,
       suggested_display_precision=2),
@@ -64,7 +65,8 @@ class DxBeaconSensor(DxBeaconEntity, SensorEntity):
     def _apply(self, data: BeaconData) -> None:
         self._attr_native_value = getattr(data, self._key)
         self._attr_extra_state_attributes = {
-            "source": data.source, "uuid": data.uuid, "major": data.major, "minor": data.minor,
+            "source": data.source, "source_name": data.source_name,
+            "uuid": data.uuid, "major": data.major, "minor": data.minor,
         }
 
     @property

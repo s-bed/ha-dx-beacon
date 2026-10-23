@@ -2,6 +2,7 @@
   "entity": {
     "device_tracker": {"tracker": {"default": "mdi:access-point"}},
     "sensor": {
+      "source_name": {"default": "mdi:access-point"},
       "distance": {"default": "mdi:signal-distance-variant"},
       "rssi": {"default": "mdi:bluetooth-audio"},
       "tx_power": {"default": "mdi:access-point"},

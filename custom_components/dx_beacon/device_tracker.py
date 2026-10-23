@@ -28,6 +28,7 @@ class DxBeaconTracker(DxBeaconEntity, BaseTrackerEntity):
         self._present = data.present
         self._attr_extra_state_attributes = {
             "rssi": data.rssi, "distance": data.distance, "source": data.source,
+            "source_name": data.source_name,
             "uuid": data.uuid, "major": data.major, "minor": data.minor,
         }
 
