@@ -4,7 +4,12 @@
   "bluetooth": [
     {
       "connectable": false,
-      "service_uuid": "0000feaa-0000-1000-8000-00805f9b34fb"
+      "service_data_uuid": "0000feab-0000-1000-8000-00805f9b34fb"
+    },
+    {
+      "connectable": false,
+      "manufacturer_id": 17496,
+      "manufacturer_data_start": [2, 21]
     }
   ],
   "codeowners": ["@Itstommy10"],
@@ -15,5 +20,5 @@
   "iot_class": "local_push",
   "issue_tracker": "https://github.com/Itstommy10/ha-dx-beacon/issues",
   "requirements": [],
-  "version": "0.3.1"
+  "version": "0.4.0"
 }

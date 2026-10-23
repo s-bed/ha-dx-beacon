@@ -3,7 +3,7 @@ from __future__ import annotations
 from homeassistant.components.device_tracker import SourceType
 from homeassistant.components.device_tracker.config_entry import BaseTrackerEntity
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import STATE_HOME, STATE_NOT_HOME
+from homeassistant.const import STATE_HOME, STATE_NOT_HOME, STATE_UNKNOWN
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
@@ -12,7 +12,9 @@ from .const import CONF_ADDRESS
 from .entity import DxBeaconEntity
 
 
-async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, add: AddEntitiesCallback) -> None:
+async def async_setup_entry(
+    hass: HomeAssistant, entry: ConfigEntry, add: AddEntitiesCallback
+) -> None:
     add([DxBeaconTracker(entry, entry.data[CONF_ADDRESS])])
 
 
@@ -22,14 +24,15 @@ class DxBeaconTracker(DxBeaconEntity, BaseTrackerEntity):
 
     def __init__(self, entry, address):
         super().__init__(entry, address, "tracker")
-        self._present = False
+        self._present: bool | None = None
 
     def _apply(self, data: BeaconData) -> None:
         self._present = data.present
         self._attr_extra_state_attributes = {
-            "rssi": data.rssi, "distance": data.distance, "source": data.source,
-            "source_name": data.source_name,
-            "uuid": data.uuid, "major": data.major, "minor": data.minor,
+            **self._common_attributes(data),
+            "rssi": data.rssi,
+            "distance": data.distance,
+            "last_seen": data.last_seen.isoformat() if data.last_seen else None,
         }
 
     @property
@@ -38,4 +41,6 @@ class DxBeaconTracker(DxBeaconEntity, BaseTrackerEntity):
 
     @property
     def state(self) -> str:
+        if self._present is None:
+            return STATE_UNKNOWN
         return STATE_HOME if self._present else STATE_NOT_HOME

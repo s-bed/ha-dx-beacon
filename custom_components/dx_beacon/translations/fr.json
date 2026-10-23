@@ -3,29 +3,127 @@
     "step": {
       "user": {
         "title": "Balise DX-SMART",
-        "data": { "address": "Adresse MAC de la balise" }
+        "menu_options": {
+          "discovered": "Choisir une balise détectée",
+          "manual": "Saisir une adresse manuellement"
+        }
+      },
+      "discovered": {
+        "title": "Choisir une balise détectée",
+        "data": {
+          "address": "Adresse MAC de la balise"
+        }
+      },
+      "manual": {
+        "title": "Balise DX-SMART",
+        "data": {
+          "address": "Adresse MAC de la balise",
+          "model": "Modèle de la balise"
+        }
       },
       "confirm": {
         "title": "Ajouter la balise {name} ?",
-        "description": "Balise Eddystone {name} détectée."
+        "description": "Balise DX-SMART {name} détectée.",
+        "data": {
+          "model": "Modèle de la balise"
+        }
+      },
+      "reconfigure": {
+        "title": "Remplacer ou modifier la balise",
+        "description": "Saisissez l’adresse et le modèle de la balise de remplacement. Les entités existantes et leur historique sont conservés.",
+        "data": {
+          "address": "Adresse MAC de la balise",
+          "model": "Modèle de la balise"
+        }
       }
     },
-    "abort": { "already_configured": "Balise déjà configurée" }
+    "error": {
+      "invalid_address": "Saisissez une adresse MAC Bluetooth complète."
+    },
+    "abort": {
+      "already_configured": "Balise déjà configurée",
+      "not_supported": "Aucune identification DX-SMART prise en charge dans cette annonce.",
+      "reconfigure_successful": "Configuration de la balise mise à jour.",
+      "already_in_progress": "La configuration de cette balise est déjà en cours."
+    }
   },
   "entity": {
     "device_tracker": {
-      "tracker": { "name": "Présence" }
+      "tracker": {
+        "name": "Présence"
+      }
     },
     "sensor": {
-      "source_name": { "name": "Récepteur le plus proche" },
-      "distance": { "name": "Distance estimée" },
-      "rssi": { "name": "Intensité du signal" },
-      "battery_pct": { "name": "Batterie" },
-      "temperature": { "name": "Température de la puce" },
-      "tx_power": { "name": "Puissance d'émission à 1 m" },
-      "battery_mv": { "name": "Tension de la batterie" },
-      "adv_count": { "name": "Nombre de trames émises" },
-      "uptime_s": { "name": "Durée de fonctionnement" }
+      "source_name": {
+        "name": "Récepteur le plus proche"
+      },
+      "distance": {
+        "name": "Distance estimée"
+      },
+      "rssi": {
+        "name": "Intensité du signal"
+      },
+      "battery_pct": {
+        "name": "Batterie"
+      },
+      "temperature": {
+        "name": "Température de la puce"
+      },
+      "tx_power": {
+        "name": "Puissance d'émission à 1 m"
+      },
+      "battery_mv": {
+        "name": "Tension de la batterie"
+      },
+      "adv_count": {
+        "name": "Nombre de trames émises"
+      },
+      "uptime_s": {
+        "name": "Durée de fonctionnement"
+      },
+      "last_seen": {
+        "name": "Dernière détection"
+      },
+      "last_reboot": {
+        "name": "Dernier redémarrage"
+      }
+    },
+    "binary_sensor": {
+      "low_battery": {
+        "name": "Batterie faible"
+      },
+      "reception": {
+        "name": "Réception d’annonces"
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Paramètres de la balise",
+        "data": {
+          "departure_timeout": "Délai de départ (secondes)",
+          "telemetry_timeout": "Délai de validité de la télémétrie (secondes)",
+          "low_battery_threshold": "Seuil de batterie faible (%)",
+          "tlm_format": "Format de télémétrie"
+        },
+        "data_description": {
+          "departure_timeout": "Signaler une absence après ce délai sans nouvelle annonce.",
+          "telemetry_timeout": "Une mesure devient indisponible si sa propre trame n’a pas été reçue durant ce délai.",
+          "tlm_format": "Utilisez le format DX-CP35 pour l’encodage de la tension et des compteurs propre à son micrologiciel, ou le format Eddystone standard pour les autres."
+        }
+      }
+    },
+    "error": {
+      "invalid_options": "Vérifiez les délais, le seuil de batterie et le format de télémétrie."
+    }
+  },
+  "selector": {
+    "tlm_format": {
+      "options": {
+        "standard": "Eddystone standard",
+        "dx_cp35": "Micrologiciel DX-CP35"
+      }
     }
   }
 }

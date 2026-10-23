@@ -5,6 +5,7 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
+import pytest_asyncio
 from bleak.backends.device import BLEDevice
 from bleak.backends.scanner import AdvertisementData
 from homeassistant.components.bluetooth import (
@@ -100,7 +101,7 @@ def test_title_and_mac_fallback(hass, registry, title):
     assert async_resolve_source_name(hass, SOURCE) == SOURCE
 
 
-def advertisement(source=SOURCE, rssi=-59):
+def advertisement(source=SOURCE, rssi=-59, time=100.0):
     """A non-connectable iBeacon with DX battery data."""
     return BluetoothServiceInfoBleak.from_device_and_advertisement_data(
         BLEDevice(BEACON, "Beacon", {}),
@@ -116,20 +117,36 @@ def advertisement(source=SOURCE, rssi=-59):
             platform_data=(),
         ),
         source,
-        100.0,
+        time,
         False,
     )
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def receiver(hass, registry):
     registry.async_get_device.return_value = SimpleNamespace(
         name_by_user="Living room AP", name=None
     )
     entry = SimpleNamespace(
-        entry_id="beacon-1", data={CONF_ADDRESS: BEACON}, async_on_unload=Mock()
+        entry_id="beacon-1",
+        data={CONF_ADDRESS: BEACON},
+        options={},
+        async_on_unload=Mock(),
     )
+    clock = SimpleNamespace(monotonic=100.0, now=datetime(2026, 10, 23, tzinfo=UTC))
     with (
+        patch("custom_components.dx_beacon._update_device"),
+        patch(
+            "custom_components.dx_beacon.monotonic_time_coarse",
+            side_effect=lambda: clock.monotonic,
+        ),
+        patch(
+            "custom_components.dx_beacon.dt_util.utcnow", side_effect=lambda: clock.now
+        ),
+        patch(
+            "custom_components.dx_beacon.bluetooth.async_current_scanners",
+            return_value=[SimpleNamespace(scanning=True)],
+        ) as scanners,
         patch(
             "custom_components.dx_beacon.bluetooth.async_register_callback"
         ) as register,
@@ -142,7 +159,9 @@ async def receiver(hass, registry):
         ) as latest,
         patch("custom_components.dx_beacon.async_dispatcher_send") as dispatch,
     ):
+        latest.return_value = None
         assert await async_setup_entry(hass, entry)
+        latest.reset_mock()
         on_adv = register.call_args.args[1]
         on_adv(advertisement(), BluetoothChange.ADVERTISEMENT)
         yield SimpleNamespace(
@@ -156,6 +175,8 @@ async def receiver(hass, registry):
             interval=interval,
             dispatch=dispatch,
             registry=registry,
+            clock=clock,
+            scanners=scanners,
         )
 
 
@@ -183,7 +204,7 @@ async def test_sensor_and_tracker_expose_name_and_mac(receiver):
         if desc.key == "source_name":
             assert sensor.native_value == "Living room AP"
             assert sensor.available
-            assert sensor.entity_registry_enabled_default
+            assert not sensor.entity_registry_enabled_default
     tracker = DxBeaconTracker(receiver.entry, BEACON)
     tracker._apply(data)
     assert tracker.extra_state_attributes["source_name"] == "Living room AP"
@@ -197,7 +218,7 @@ async def test_handoff_with_unchanged_payload(receiver):
     receiver.registry.async_get_device.return_value = SimpleNamespace(
         name_by_user="Kitchen AP", name=None
     )
-    receiver.refresh(datetime.now(UTC))
+    receiver.refresh(receiver.clock.now)
     data = receiver.hass.data[DOMAIN][receiver.entry.entry_id]
     assert data.source == OTHER_SOURCE
     assert data.source_name == "Kitchen AP"
@@ -212,10 +233,10 @@ async def test_handoff_with_unchanged_payload(receiver):
 async def test_rename_and_unchanged_refresh(receiver):
     receiver.latest.return_value = advertisement()
     receiver.dispatch.reset_mock()
-    receiver.refresh(datetime.now(UTC))
+    receiver.refresh(receiver.clock.now)
     receiver.dispatch.assert_not_called()
     receiver.registry.async_get_device.return_value.name_by_user = "Renamed AP"
-    receiver.refresh(datetime.now(UTC))
+    receiver.refresh(receiver.clock.now)
     assert (
         receiver.hass.data[DOMAIN][receiver.entry.entry_id].source_name == "Renamed AP"
     )
@@ -224,6 +245,8 @@ async def test_rename_and_unchanged_refresh(receiver):
 
 @pytest.mark.asyncio
 async def test_unavailable_and_return(receiver):
+    receiver.clock.monotonic += 181
+    receiver.clock.now += timedelta(seconds=181)
     receiver.on_unavailable(advertisement())
     data = receiver.hass.data[DOMAIN][receiver.entry.entry_id]
     assert not data.present
@@ -236,9 +259,11 @@ async def test_unavailable_and_return(receiver):
     assert not sensor.available
     receiver.latest.return_value = advertisement()
     receiver.dispatch.reset_mock()
-    receiver.refresh(datetime.now(UTC))
+    receiver.refresh(receiver.clock.now)
     receiver.dispatch.assert_not_called()  # Cached data must not revive an absent beacon.
-    receiver.on_adv(advertisement(), BluetoothChange.ADVERTISEMENT)
+    receiver.on_adv(
+        advertisement(time=receiver.clock.monotonic), BluetoothChange.ADVERTISEMENT
+    )
     sensor._apply(receiver.hass.data[DOMAIN][receiver.entry.entry_id])
     assert sensor.available
     assert sensor.native_value == "Living room AP"

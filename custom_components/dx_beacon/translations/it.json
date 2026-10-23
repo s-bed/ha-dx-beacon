@@ -2,30 +2,128 @@
   "config": {
     "step": {
       "user": {
-        "title": "DX-SMART beacon",
-        "data": { "address": "Indirizzo MAC del beacon" }
+        "title": "Beacon DX-SMART",
+        "menu_options": {
+          "discovered": "Scegli un beacon rilevato",
+          "manual": "Inserisci un indirizzo manualmente"
+        }
+      },
+      "discovered": {
+        "title": "Scegli un beacon rilevato",
+        "data": {
+          "address": "Indirizzo MAC del beacon"
+        }
+      },
+      "manual": {
+        "title": "Beacon DX-SMART",
+        "data": {
+          "address": "Indirizzo MAC del beacon",
+          "model": "Modello del beacon"
+        }
       },
       "confirm": {
         "title": "Aggiungere il beacon {name}?",
-        "description": "Rilevato beacon Eddystone {name}."
+        "description": "Rilevato beacon DX-SMART {name}.",
+        "data": {
+          "model": "Modello del beacon"
+        }
+      },
+      "reconfigure": {
+        "title": "Sostituisci o modifica il beacon",
+        "description": "Inserisci indirizzo e modello del beacon sostitutivo. Le entità esistenti e la loro cronologia vengono conservate.",
+        "data": {
+          "address": "Indirizzo MAC del beacon",
+          "model": "Modello del beacon"
+        }
       }
     },
-    "abort": { "already_configured": "Beacon già configurato" }
+    "error": {
+      "invalid_address": "Inserisci un indirizzo MAC Bluetooth completo."
+    },
+    "abort": {
+      "already_configured": "Beacon già configurato",
+      "not_supported": "Questa trasmissione non contiene un’identificazione DX-SMART supportata.",
+      "reconfigure_successful": "Configurazione del beacon aggiornata.",
+      "already_in_progress": "La configurazione di questo beacon è già in corso."
+    }
   },
   "entity": {
     "device_tracker": {
-      "tracker": { "name": "Presenza" }
+      "tracker": {
+        "name": "Presenza"
+      }
     },
     "sensor": {
-      "source_name": { "name": "Ricevitore più vicino" },
-      "distance": { "name": "Distanza stimata" },
-      "rssi": { "name": "Intensità del segnale" },
-      "battery_pct": { "name": "Batteria" },
-      "temperature": { "name": "Temperatura chip" },
-      "tx_power": { "name": "Potenza a 1 m" },
-      "battery_mv": { "name": "Tensione batteria" },
-      "adv_count": { "name": "Pacchetti inviati" },
-      "uptime_s": { "name": "Uptime" }
+      "source_name": {
+        "name": "Ricevitore più vicino"
+      },
+      "distance": {
+        "name": "Distanza stimata"
+      },
+      "rssi": {
+        "name": "Intensità del segnale"
+      },
+      "battery_pct": {
+        "name": "Batteria"
+      },
+      "temperature": {
+        "name": "Temperatura chip"
+      },
+      "tx_power": {
+        "name": "Potenza a 1 m"
+      },
+      "battery_mv": {
+        "name": "Tensione batteria"
+      },
+      "adv_count": {
+        "name": "Pacchetti inviati"
+      },
+      "uptime_s": {
+        "name": "Uptime"
+      },
+      "last_seen": {
+        "name": "Ultima rilevazione"
+      },
+      "last_reboot": {
+        "name": "Ultimo riavvio"
+      }
+    },
+    "binary_sensor": {
+      "low_battery": {
+        "name": "Batteria scarica"
+      },
+      "reception": {
+        "name": "Ricezione trasmissioni"
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Impostazioni del beacon",
+        "data": {
+          "departure_timeout": "Tempo prima dell’assenza (secondi)",
+          "telemetry_timeout": "Validità della telemetria (secondi)",
+          "low_battery_threshold": "Soglia batteria scarica (%)",
+          "tlm_format": "Formato telemetria"
+        },
+        "data_description": {
+          "departure_timeout": "Segnala l’assenza dopo questo intervallo senza una nuova trasmissione.",
+          "telemetry_timeout": "Una misura diventa indisponibile se il relativo pacchetto non è stato ricevuto entro questo intervallo.",
+          "tlm_format": "Usa il formato DX-CP35 per la codifica di tensione e contatori del suo firmware, oppure Eddystone standard per altri firmware."
+        }
+      }
+    },
+    "error": {
+      "invalid_options": "Controlla gli intervalli, la soglia della batteria e il formato della telemetria."
+    }
+  },
+  "selector": {
+    "tlm_format": {
+      "options": {
+        "standard": "Eddystone standard",
+        "dx_cp35": "Firmware DX-CP35"
+      }
     }
   }
 }

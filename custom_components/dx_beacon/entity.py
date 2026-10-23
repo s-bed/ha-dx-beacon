@@ -7,7 +7,7 @@ from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.entity import Entity
 
 from . import BeaconData, signal
-from .const import DOMAIN
+from .const import CONF_IDENTITY_ADDRESS, CONF_MODEL, DEFAULT_MODEL, DOMAIN
 
 
 class DxBeaconEntity(Entity):
@@ -17,18 +17,33 @@ class DxBeaconEntity(Entity):
     def __init__(self, entry: ConfigEntry, address: str, key: str) -> None:
         self._entry = entry
         self._key = key
-        self._attr_unique_id = f"{address}_{key}"
+        identity = entry.data.get(CONF_IDENTITY_ADDRESS, address)
+        model = entry.data.get(CONF_MODEL, DEFAULT_MODEL)
+        self._attr_unique_id = f"{identity}_{key}"
         self._attr_device_info = DeviceInfo(
-            identifiers={(DOMAIN, address)},
+            identifiers={(DOMAIN, identity)},
             connections={(CONNECTION_BLUETOOTH, address)},
-            name=f"DX-CP27 {address[-5:]}",
+            name=f"{model} {identity[-5:]}",
             manufacturer="SHEN ZHEN DX-SMART TECHNOLOGY CO.,LTD",
-            model="DX-CP27",
+            model=model,
         )
+
+    @staticmethod
+    def _common_attributes(data: BeaconData) -> dict:
+        """Keep reception and beacon identity available for automations."""
+        return {
+            "source": data.source,
+            "source_name": data.source_name,
+            "uuid": data.uuid,
+            "major": data.major,
+            "minor": data.minor,
+        }
 
     async def async_added_to_hass(self) -> None:
         self.async_on_remove(
-            async_dispatcher_connect(self.hass, signal(self._entry.entry_id), self._handle)
+            async_dispatcher_connect(
+                self.hass, signal(self._entry.entry_id), self._handle
+            )
         )
         data: BeaconData | None = self.hass.data[DOMAIN].get(self._entry.entry_id)
         if data:

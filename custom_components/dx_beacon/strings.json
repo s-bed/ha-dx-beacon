@@ -3,29 +3,127 @@
     "step": {
       "user": {
         "title": "DX-SMART beacon",
-        "data": { "address": "Beacon MAC address" }
+        "menu_options": {
+          "discovered": "Choose a discovered beacon",
+          "manual": "Enter an address manually"
+        }
+      },
+      "discovered": {
+        "title": "Choose a discovered beacon",
+        "data": {
+          "address": "Beacon MAC address"
+        }
+      },
+      "manual": {
+        "title": "DX-SMART beacon",
+        "data": {
+          "address": "Beacon MAC address",
+          "model": "Beacon model"
+        }
       },
       "confirm": {
         "title": "Add beacon {name}?",
-        "description": "Eddystone beacon {name} detected."
+        "description": "DX-SMART beacon {name} detected.",
+        "data": {
+          "model": "Beacon model"
+        }
+      },
+      "reconfigure": {
+        "title": "Replace or update beacon",
+        "description": "Enter the replacement beacon address and model. Existing entities and their history are retained.",
+        "data": {
+          "address": "Beacon MAC address",
+          "model": "Beacon model"
+        }
       }
     },
-    "abort": { "already_configured": "Beacon already configured" }
+    "error": {
+      "invalid_address": "Enter a complete Bluetooth MAC address."
+    },
+    "abort": {
+      "already_configured": "Beacon already configured",
+      "not_supported": "No supported DX-SMART identification was found in this advertisement.",
+      "reconfigure_successful": "Beacon configuration updated.",
+      "already_in_progress": "Beacon configuration is already in progress."
+    }
   },
   "entity": {
     "device_tracker": {
-      "tracker": { "name": "Presence" }
+      "tracker": {
+        "name": "Presence"
+      }
     },
     "sensor": {
-      "source_name": { "name": "Nearest receiver" },
-      "distance": { "name": "Estimated distance" },
-      "rssi": { "name": "Signal strength" },
-      "battery_pct": { "name": "Battery" },
-      "temperature": { "name": "Chip temperature" },
-      "tx_power": { "name": "TX power at 1 m" },
-      "battery_mv": { "name": "Battery voltage" },
-      "adv_count": { "name": "Advertising count" },
-      "uptime_s": { "name": "Uptime" }
+      "source_name": {
+        "name": "Nearest receiver"
+      },
+      "distance": {
+        "name": "Estimated distance"
+      },
+      "rssi": {
+        "name": "Signal strength"
+      },
+      "battery_pct": {
+        "name": "Battery"
+      },
+      "temperature": {
+        "name": "Chip temperature"
+      },
+      "tx_power": {
+        "name": "TX power at 1 m"
+      },
+      "battery_mv": {
+        "name": "Battery voltage"
+      },
+      "adv_count": {
+        "name": "Advertising count"
+      },
+      "uptime_s": {
+        "name": "Uptime"
+      },
+      "last_seen": {
+        "name": "Last seen"
+      },
+      "last_reboot": {
+        "name": "Last reboot"
+      }
+    },
+    "binary_sensor": {
+      "low_battery": {
+        "name": "Low battery"
+      },
+      "reception": {
+        "name": "Receiving advertisements"
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Beacon settings",
+        "data": {
+          "departure_timeout": "Departure timeout (seconds)",
+          "telemetry_timeout": "Telemetry freshness timeout (seconds)",
+          "low_battery_threshold": "Low battery threshold (%)",
+          "tlm_format": "Telemetry format"
+        },
+        "data_description": {
+          "departure_timeout": "Mark presence away after this long without a new advertisement.",
+          "telemetry_timeout": "Treat measurements as unavailable when their own frame has not been received within this time.",
+          "tlm_format": "Use the DX-CP35 format for its firmware-specific voltage and counter encoding, or standard Eddystone for other firmware."
+        }
+      }
+    },
+    "error": {
+      "invalid_options": "Check the timeouts, battery threshold and telemetry format."
+    }
+  },
+  "selector": {
+    "tlm_format": {
+      "options": {
+        "standard": "Standard Eddystone",
+        "dx_cp35": "DX-CP35 firmware"
+      }
     }
   }
 }
