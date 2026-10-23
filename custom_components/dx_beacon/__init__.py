@@ -462,10 +462,19 @@ def _update_device(hass: HomeAssistant, entry: ConfigEntry, address: str) -> Non
     """
     registry = dr.async_get(hass)
     identity = entry.data.get(CONF_IDENTITY_ADDRESS, address)
-    if (device := registry.async_get_device(identifiers={(DOMAIN, identity)})) is None:
+    if get_device := getattr(registry, "async_get_device_by_identifier", None):
+        device = get_device((DOMAIN, identity), entry.entry_id)
+    else:
+        # Home Assistant before 2026.8 uses the shared device registry.
+        device = registry.async_get_device(identifiers={(DOMAIN, identity)})
+    if device is None:
         return
     updates: dict = {"model": entry.data.get(CONF_MODEL, DEFAULT_MODEL)}
-    if device.config_entries <= {entry.entry_id}:
+    if hasattr(device, "config_entry_id"):
+        owned_by_entry = device.config_entry_id == entry.entry_id
+    else:
+        owned_by_entry = device.config_entries <= {entry.entry_id}
+    if owned_by_entry:
         updates["new_connections"] = {
             connection
             for connection in device.connections

@@ -46,17 +46,26 @@ async def test_failed_unload_retains_live_runtime(success):
         assert hass.data[DOMAIN]["beacon"] is state
 
 
-@pytest.mark.parametrize("shared", [False, True])
+@pytest.mark.parametrize("current_api", [False, True])
+@pytest.mark.parametrize("owned_by_entry", [False, True])
 def test_replacement_corrects_model_without_removing_other_integrations_connections(
-    shared,
+    current_api,
+    owned_by_entry,
 ):
     registry = create_autospec(dr.DeviceRegistry, instance=True)
     device = SimpleNamespace(
         id="device-id",
-        config_entries={"beacon", "bermuda"} if shared else {"beacon"},
         connections={(dr.CONNECTION_BLUETOOTH, ORIGINAL), ("other", "preserved")},
     )
-    registry.async_get_device.return_value = device
+    if current_api:
+        device.config_entry_id = "beacon" if owned_by_entry else "bermuda"
+        # Supply the new API even when running against Home Assistant 2026.3.
+        registry.async_get_device_by_identifier = Mock(return_value=device)
+    else:
+        device.config_entries = {"beacon"} if owned_by_entry else {"beacon", "bermuda"}
+        if hasattr(registry, "async_get_device_by_identifier"):
+            del registry.async_get_device_by_identifier
+        registry.async_get_device.return_value = device
     entry = SimpleNamespace(
         entry_id="beacon",
         data={
@@ -67,10 +76,18 @@ def test_replacement_corrects_model_without_removing_other_integrations_connecti
     )
     with patch("custom_components.dx_beacon.dr.async_get", return_value=registry):
         _update_device(SimpleNamespace(), entry, CURRENT)
-    registry.async_get_device.assert_called_once_with(identifiers={(DOMAIN, ORIGINAL)})
+    if current_api:
+        registry.async_get_device_by_identifier.assert_called_once_with(
+            (DOMAIN, ORIGINAL), "beacon"
+        )
+        registry.async_get_device.assert_not_called()
+    else:
+        registry.async_get_device.assert_called_once_with(
+            identifiers={(DOMAIN, ORIGINAL)}
+        )
     updates = registry.async_update_device.call_args.kwargs
     assert updates["model"] == "DX-CP35"
-    if shared:
+    if not owned_by_entry:
         assert "new_connections" not in updates
     else:
         assert updates["new_connections"] == {
