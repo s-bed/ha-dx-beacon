@@ -1,0 +1,30 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Balise DX-SMART",
+        "data": { "address": "Adresse MAC de la balise" }
+      },
+      "confirm": {
+        "title": "Ajouter la balise {name} ?",
+        "description": "Balise Eddystone {name} détectée."
+      }
+    },
+    "abort": { "already_configured": "Balise déjà configurée" }
+  },
+  "entity": {
+    "device_tracker": {
+      "tracker": { "name": "Présence" }
+    },
+    "sensor": {
+      "distance": { "name": "Distance estimée" },
+      "rssi": { "name": "Intensité du signal" },
+      "battery_pct": { "name": "Batterie" },
+      "temperature": { "name": "Température de la puce" },
+      "tx_power": { "name": "Puissance d'émission à 1 m" },
+      "battery_mv": { "name": "Tension de la batterie" },
+      "adv_count": { "name": "Nombre de trames émises" },
+      "uptime_s": { "name": "Durée de fonctionnement" }
+    }
+  }
+}

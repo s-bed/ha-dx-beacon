@@ -3,13 +3,28 @@
     "step": {
       "user": {
         "title": "DX-SMART beacon",
-        "data": { "address": "Indirizzo MAC del beacon" }
+        "data": { "address": "Beacon MAC address" }
       },
       "confirm": {
-        "title": "Aggiungere il beacon {name}?",
-        "description": "Rilevato beacon Eddystone {name}."
+        "title": "Add beacon {name}?",
+        "description": "Eddystone beacon {name} detected."
       }
     },
-    "abort": { "already_configured": "Beacon già configurato" }
+    "abort": { "already_configured": "Beacon already configured" }
+  },
+  "entity": {
+    "device_tracker": {
+      "tracker": { "name": "Presence" }
+    },
+    "sensor": {
+      "distance": { "name": "Estimated distance" },
+      "rssi": { "name": "Signal strength" },
+      "battery_pct": { "name": "Battery" },
+      "temperature": { "name": "Chip temperature" },
+      "tx_power": { "name": "TX power at 1 m" },
+      "battery_mv": { "name": "Battery voltage" },
+      "adv_count": { "name": "Advertising count" },
+      "uptime_s": { "name": "Uptime" }
+    }
   }
 }

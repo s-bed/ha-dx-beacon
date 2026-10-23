@@ -17,6 +17,8 @@ It reads the beacon advertisements through Home Assistant's Bluetooth stack (loc
 
 The `source` attribute on every entity tells which adapter/proxy received the last packet – useful for room-level presence with several ESPHome proxies.
 
+TX power, battery voltage, advertising count, and uptime are disabled by default. The presence tracker and other sensors are enabled by default. These defaults apply to newly registered entities; existing enable/disable choices are preserved. Disabled entities can be enabled in Settings → Devices & Services → Entities.
+
 ## Installation
 
 ### HACS (recommended)

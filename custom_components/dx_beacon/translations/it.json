@@ -11,5 +11,20 @@
       }
     },
     "abort": { "already_configured": "Beacon già configurato" }
+  },
+  "entity": {
+    "device_tracker": {
+      "tracker": { "name": "Presenza" }
+    },
+    "sensor": {
+      "distance": { "name": "Distanza stimata" },
+      "rssi": { "name": "Intensità del segnale" },
+      "battery_pct": { "name": "Batteria" },
+      "temperature": { "name": "Temperatura chip" },
+      "tx_power": { "name": "Potenza a 1 m" },
+      "battery_mv": { "name": "Tensione batteria" },
+      "adv_count": { "name": "Pacchetti inviati" },
+      "uptime_s": { "name": "Uptime" }
+    }
   }
 }

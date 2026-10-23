@@ -17,7 +17,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, add: AddEnt
 
 
 class DxBeaconTracker(DxBeaconEntity, BaseTrackerEntity):
-    _attr_name = None  # entità principale: prende il nome del dispositivo
+    _attr_entity_registry_enabled_default = True
     _attr_translation_key = "tracker"
 
     def __init__(self, entry, address):
