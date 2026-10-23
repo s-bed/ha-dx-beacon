@@ -1,10 +1,13 @@
 """Entity identity, freshness, and battery alert behavior."""
 
+import builtins
+import importlib.util
 from dataclasses import replace
 from datetime import UTC, datetime, timedelta
 from types import SimpleNamespace
 
 import pytest
+from homeassistant.components import device_tracker as public_tracker
 from homeassistant.components.binary_sensor import BinarySensorDeviceClass
 from homeassistant.components.sensor import SensorDeviceClass
 from homeassistant.const import (
@@ -16,6 +19,7 @@ from homeassistant.const import (
 from homeassistant.helpers.device_registry import CONNECTION_BLUETOOTH
 
 from custom_components.dx_beacon import BeaconData
+from custom_components.dx_beacon import device_tracker as tracker_platform
 from custom_components.dx_beacon.binary_sensor import (
     DESCRIPTIONS as BINARY_DESCRIPTIONS,
 )
@@ -38,6 +42,28 @@ REPLACEMENT = "AA:BB:CC:DD:EE:00"
 NOW = datetime(2026, 10, 23, 18, 0, tzinfo=UTC)
 SENSOR_DESCRIPTIONS = {desc.key: desc for desc in DESCRIPTIONS}
 BINARY_SENSOR_DESCRIPTIONS = {desc.key: desc for desc in BINARY_DESCRIPTIONS}
+
+
+def test_tracker_uses_public_import_when_available(monkeypatch):
+    """Current HA must not touch the deprecated config_entry alias."""
+    tracker_type = tracker_platform.BaseTrackerEntity
+    monkeypatch.setattr(
+        public_tracker, "BaseTrackerEntity", tracker_type, raising=False
+    )
+    real_import = builtins.__import__
+
+    def guarded_import(name, globals=None, locals=None, fromlist=(), level=0):
+        if name == "homeassistant.components.device_tracker.config_entry":
+            raise AssertionError("Deprecated tracker alias was imported")
+        return real_import(name, globals, locals, fromlist, level)
+
+    monkeypatch.setattr(builtins, "__import__", guarded_import)
+    spec = importlib.util.spec_from_file_location(
+        "custom_components.dx_beacon._tracker_import_test", tracker_platform.__file__
+    )
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    assert module.BaseTrackerEntity is tracker_type
 
 
 def entry(data=None, options=None):

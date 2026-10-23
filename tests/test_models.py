@@ -66,6 +66,11 @@ def runtime():
         ),
     )
     with (
+        patch(
+            "custom_components.dx_beacon.bluetooth.async_register_advertisement_callback",
+            None,
+            create=True,
+        ),
         patch("custom_components.dx_beacon._update_device"),
         patch("custom_components.dx_beacon.monotonic_time_coarse", return_value=100),
         patch("custom_components.dx_beacon.dt_util.utcnow", return_value=NOW),

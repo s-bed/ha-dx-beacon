@@ -38,7 +38,8 @@
       }
     },
     "error": {
-      "invalid_address": "Saisissez une adresse MAC Bluetooth complète."
+      "invalid_address": "Saisissez une adresse MAC Bluetooth complète.",
+      "invalid_model": "Saisissez un modèle de balise non vide."
     },
     "abort": {
       "already_configured": "Balise déjà configurée",

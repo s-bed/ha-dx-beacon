@@ -146,20 +146,24 @@ class DxBeaconConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def async_step_confirm(self, user_input=None):
         """Confirm discovery and allow a model correction."""
+        errors = {}
         if user_input is not None:
-            return self.async_create_entry(
-                title=f"DX beacon {self._address}",
-                data={
-                    CONF_ADDRESS: self._address,
-                    CONF_MODEL: _model(user_input.get(CONF_MODEL, self._model)),
-                },
-            )
+            try:
+                model = _model(user_input.get(CONF_MODEL, self._model))
+            except vol.Invalid:
+                errors[CONF_MODEL] = "invalid_model"
+            else:
+                return self.async_create_entry(
+                    title=f"DX beacon {self._address}",
+                    data={CONF_ADDRESS: self._address, CONF_MODEL: model},
+                )
         return self.async_show_form(
             step_id="confirm",
             data_schema=vol.Schema(
-                {vol.Required(CONF_MODEL, default=self._model): vol.All(str, _model)}
+                {vol.Required(CONF_MODEL, default=self._model): str}
             ),
             description_placeholders={"name": self._address},
+            errors=errors,
         )
 
     async def async_step_user(self, user_input=None):
@@ -195,7 +199,11 @@ class DxBeaconConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 address = _normalize_address(user_input[CONF_ADDRESS])
             except ValueError:
                 errors[CONF_ADDRESS] = "invalid_address"
-            else:
+            try:
+                model = _model(user_input.get(CONF_MODEL, self._model))
+            except vol.Invalid:
+                errors[CONF_MODEL] = "invalid_model"
+            if not errors:
                 await self.async_set_unique_id(address)
                 self._abort_if_unique_id_configured()
                 self._abort_if_identity_configured(address)
@@ -203,7 +211,7 @@ class DxBeaconConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     title=f"DX beacon {address}",
                     data={
                         CONF_ADDRESS: address,
-                        CONF_MODEL: _model(user_input.get(CONF_MODEL, self._model)),
+                        CONF_MODEL: model,
                     },
                 )
         return self.async_show_form(
@@ -211,7 +219,7 @@ class DxBeaconConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             data_schema=vol.Schema(
                 {
                     vol.Required(CONF_ADDRESS, default=self._address or ""): str,
-                    vol.Required(CONF_MODEL, default=self._model): vol.All(str, _model),
+                    vol.Required(CONF_MODEL, default=self._model): str,
                 }
             ),
             errors=errors,
@@ -226,7 +234,15 @@ class DxBeaconConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 address = _normalize_address(user_input[CONF_ADDRESS])
             except ValueError:
                 errors[CONF_ADDRESS] = "invalid_address"
-            else:
+            try:
+                model = _model(
+                    user_input.get(
+                        CONF_MODEL, entry.data.get(CONF_MODEL, DEFAULT_MODEL)
+                    )
+                )
+            except vol.Invalid:
+                errors[CONF_MODEL] = "invalid_model"
+            if not errors:
                 await self.async_set_unique_id(address)
                 if address != entry.unique_id:
                     self._abort_if_unique_id_configured()
@@ -238,11 +254,7 @@ class DxBeaconConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     unique_id=address,
                     data_updates={
                         CONF_ADDRESS: address,
-                        CONF_MODEL: _model(
-                            user_input.get(
-                                CONF_MODEL, entry.data.get(CONF_MODEL, DEFAULT_MODEL)
-                            )
-                        ),
+                        CONF_MODEL: model,
                         CONF_IDENTITY_ADDRESS: entry.data.get(
                             CONF_IDENTITY_ADDRESS, entry.data[CONF_ADDRESS]
                         ),
@@ -255,7 +267,7 @@ class DxBeaconConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     vol.Required(CONF_ADDRESS, default=entry.data[CONF_ADDRESS]): str,
                     vol.Required(
                         CONF_MODEL, default=entry.data.get(CONF_MODEL, DEFAULT_MODEL)
-                    ): vol.All(str, _model),
+                    ): str,
                 }
             ),
             errors=errors,

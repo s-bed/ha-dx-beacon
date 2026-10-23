@@ -38,7 +38,8 @@
       }
     },
     "error": {
-      "invalid_address": "Inserisci un indirizzo MAC Bluetooth completo."
+      "invalid_address": "Inserisci un indirizzo MAC Bluetooth completo.",
+      "invalid_model": "Inserisci un modello di beacon non vuoto."
     },
     "abort": {
       "already_configured": "Beacon già configurato",

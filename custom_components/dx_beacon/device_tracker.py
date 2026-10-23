@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from homeassistant.components.device_tracker import SourceType
-from homeassistant.components.device_tracker.config_entry import BaseTrackerEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import STATE_HOME, STATE_NOT_HOME, STATE_UNKNOWN
 from homeassistant.core import HomeAssistant
@@ -10,6 +9,12 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from . import BeaconData
 from .const import CONF_ADDRESS
 from .entity import DxBeaconEntity
+
+try:
+    from homeassistant.components.device_tracker import BaseTrackerEntity
+except ImportError:
+    # HA 2026.3 does not yet export this class from the public module.
+    from homeassistant.components.device_tracker.config_entry import BaseTrackerEntity
 
 
 async def async_setup_entry(

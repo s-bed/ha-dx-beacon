@@ -8,6 +8,7 @@ from unittest.mock import Mock, patch
 import pytest
 from homeassistant import config_entries
 from homeassistant.data_entry_flow import AbortFlow, FlowResultType
+from homeassistant.helpers.data_entry_flow import FlowManagerResourceView
 
 from custom_components.dx_beacon.config_flow import (
     DxBeaconConfigFlow,
@@ -73,6 +74,7 @@ def entry(*, data=None, options=None, unique_id=BEACON):
         unique_id=unique_id,
         source=config_entries.SOURCE_USER,
         state=config_entries.ConfigEntryState.LOADED,
+        update_listeners=[],
     )
 
 
@@ -391,3 +393,72 @@ def test_translation_keys_match():
 
     for path in (root / "translations").glob("*.json"):
         assert keys(json.loads(path.read_text())) == keys(source)
+
+
+@pytest.mark.parametrize(
+    "step", ["manual", "confirm", "reconfigure", "discovered", "options"]
+)
+@pytest.mark.asyncio
+async def test_forms_serialize_through_home_assistant_http_view(step):
+    """A valid Python schema must also render as JSON for the setup dialog."""
+    current = entry()
+    if step == "options":
+        flow = configure_flow(DxBeaconOptionsFlow(), entry=current)
+        flow.handler = current.entry_id
+        result = await flow.async_step_init()
+    else:
+        flow = configure_flow(
+            DxBeaconConfigFlow(),
+            source=config_entries.SOURCE_RECONFIGURE,
+            entry=current,
+        )
+        flow._address = BEACON
+        flow._discovered = {BEACON: "CP35 beacon"}
+        result = await getattr(flow, f"async_step_{step}")()
+    rendered = FlowManagerResourceView(Mock())._prepare_result_json(result)
+    json.dumps(rendered)
+    assert isinstance(rendered["data_schema"], list)
+    assert rendered["data_schema"]
+
+
+@pytest.mark.parametrize("step", ["manual", "confirm", "reconfigure"])
+@pytest.mark.parametrize("model", ["", "   "])
+@pytest.mark.asyncio
+async def test_empty_model_returns_field_error_instead_of_server_error(step, model):
+    current = entry()
+    flow = configure_flow(
+        DxBeaconConfigFlow(), source=config_entries.SOURCE_RECONFIGURE, entry=current
+    )
+    flow._address = BEACON
+    result = await getattr(flow, f"async_step_{step}")(
+        {CONF_ADDRESS: BEACON, CONF_MODEL: model}
+    )
+    assert result["type"] is FlowResultType.FORM
+    assert result["errors"] == {CONF_MODEL: "invalid_model"}
+    assert flow.unique_id is None
+    flow.hass.config_entries.async_update_entry.assert_not_called()
+    json.dumps(FlowManagerResourceView(Mock())._prepare_result_json(result))
+
+
+@pytest.mark.parametrize("step", ["manual", "confirm", "reconfigure"])
+@pytest.mark.asyncio
+async def test_model_normalization_runs_after_form_submission(step):
+    current = entry()
+    flow = configure_flow(
+        DxBeaconConfigFlow(),
+        source=(
+            config_entries.SOURCE_RECONFIGURE
+            if step == "reconfigure"
+            else config_entries.SOURCE_USER
+        ),
+        entry=current,
+    )
+    flow._address = BEACON
+    result = await getattr(flow, f"async_step_{step}")(
+        {CONF_ADDRESS: BEACON, CONF_MODEL: " cp27 "}
+    )
+    if step == "reconfigure":
+        data = flow.hass.config_entries.async_update_entry.call_args.kwargs["data"]
+    else:
+        data = result["data"]
+    assert data[CONF_MODEL] == "DX-CP27"

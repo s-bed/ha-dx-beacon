@@ -135,6 +135,11 @@ async def receiver(hass, registry):
     )
     clock = SimpleNamespace(monotonic=100.0, now=datetime(2026, 10, 23, tzinfo=UTC))
     with (
+        patch(
+            "custom_components.dx_beacon.bluetooth.async_register_advertisement_callback",
+            None,
+            create=True,
+        ),
         patch("custom_components.dx_beacon._update_device"),
         patch(
             "custom_components.dx_beacon.monotonic_time_coarse",
